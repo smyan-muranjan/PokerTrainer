@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -23,10 +24,14 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -47,7 +52,32 @@ fun App(vm: MainViewModel) {
     ) {
         when(vm.state.value) {
             States.START -> StartScreen(vm)
+            States.CONFIG -> ConfigScreen(vm)
             States.PLAY -> PlayScreen(vm)
+        }
+    }
+}
+
+@Composable
+fun ConfigScreen(vm: MainViewModel) {
+    val (selectedOption, onOptionSelected) = remember { mutableIntStateOf(0) }
+    Text(text = "Enter Player Names and Select Dealer: ")
+    vm.players.forEachIndexed { i, player ->
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(text = "Player ${i + 1}")
+                TextField(
+                    value = player.name,
+                    onValueChange = { vm.setName(it, i) },
+                    label = { Text(text = "Name") }
+                )
+            }
+            RadioButton(
+                selected = (vm.dealer.intValue == i),
+                onClick = { vm.setDealer(i) }
+            )
         }
     }
 }
@@ -60,29 +90,23 @@ fun PlayScreen(vm: MainViewModel) {
 @Composable
 private fun StartScreen(vm: MainViewModel) {
 
-    var expanded by remember { mutableStateOf(false) }
+    var numPlayers by remember { mutableFloatStateOf(6F) }
+
     Text(text = "Select Number of Players: ")
     Slider(
-        value = vm.numPlayers.floatValue,
-        onValueChange = { vm.setNumPlayers(it) },
+        value = numPlayers,
+        onValueChange = { numPlayers = it },
         steps = 7,
         valueRange = 2f..10f,
         modifier = Modifier.padding(horizontal = 50.dp)
     )
     Text(
-        text = vm.numPlayers.floatValue.toInt().toString()
+        text = numPlayers.toInt().toString()
     )
-    Text(
-        text = "Choose Dealer: "
-    )
-    DealerChipsGrid(
-        numPlayers = vm.numPlayers.floatValue.toInt(),
-        dealer = vm.dealer.value,
-        onDealerChange = { vm.setDealer(it) } )
     Button(
-        onClick = { vm.startGame() }
+        onClick = { vm.setupConfig(numPlayers) }
     ) {
-        Text("Start Game")
+        Text("Continue")
     }
 }
 
